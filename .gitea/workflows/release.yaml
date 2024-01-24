@@ -1,0 +1,30 @@
+name: release
+on:
+ push:
+   tags:
+     - "[0-9]+.[0-9]+.[0-9]+"
+jobs:
+  release:
+    runs-on: [fedora-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - run: rustup target install x86_64-unknown-linux-musl
+      - name: Build
+        run: ./build.sh
+      - name: Create release
+        id: create-release
+        uses: https://git.d464.sh/actions/release@v1
+        with:
+          token: ${{ secrets.AUTH_TOKEN }}
+          tag: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+      - name: Upload assets 
+        id: upload-assets
+        uses: https://git.d464.sh/actions/upload-asset@v1
+        with:
+          token: ${{ secrets.AUTH_TOKEN }}
+          release_id: ${{ steps.create-release.outputs.release_id }}
+          paths: |
+            dist/*

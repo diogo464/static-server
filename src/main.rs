@@ -17,6 +17,10 @@ struct Args {
     /// The listen address for the server
     #[clap(long, default_value = "0.0.0.0:3000")]
     address: SocketAddr,
+
+    /// Enable directory browsing
+    #[clap(long)]
+    browse: bool,
 }
 
 struct ListEntry {
@@ -100,7 +104,7 @@ impl DirListService {
         let mut html = String::with_capacity(4096);
         html.push_str("<html>");
         html.push_str("<head>");
-        //html.push_str(r#"<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />"#);
+        html.push_str(r#"<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />"#);
         html.push_str("</head>");
         html.push_str("<body>");
         html.push_str("<table style=\"width: 100vw\">");
@@ -190,13 +194,16 @@ async fn main() -> Result<()> {
 
     let args = Args::parse();
 
-    let router = axum::Router::default()
-        .layer(tower_http::trace::TraceLayer::new_for_http())
-        .nest_service(
+    let mut router = axum::Router::default().layer(tower_http::trace::TraceLayer::new_for_http());
+    if args.browse {
+        router = router.nest_service(
             "/",
             tower_http::services::ServeDir::new(args.root.clone())
                 .fallback(DirListService::new(args.root)),
         );
+    } else {
+        router = router.nest_service("/", tower_http::services::ServeDir::new(args.root.clone()));
+    }
 
     tracing::info!("starting server at {:?}", args.address);
     let listener = TcpListener::bind(args.address).await?;
