@@ -9,10 +9,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Login to container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GITHUB_SERVER_URL }}
+          username: ${{ env.GITHUB_ACTOR }}
+          password: ${{ secrets.AUTH_TOKEN }}
       - uses: dtolnay/rust-toolchain@nightly
       - run: rustup target install x86_64-unknown-linux-musl
       - name: Build
-        run: ./build.sh
+        run: VERSION=${{ github.ref_name }} PUSH=1 ./build.sh
       - name: Create release
         id: create-release
         uses: https://git.d464.sh/actions/release@v1
