@@ -8,18 +8,19 @@ use eyre::Result;
 use http_body::Body;
 use tokio::net::TcpListener;
 
+/// A simple static file server
 #[derive(Debug, Parser)]
 struct Args {
     /// The root directory to serve
-    #[clap(long, default_value = ".")]
+    #[clap(long, default_value = ".", env = "STATIC_SERVER_ROOT")]
     root: PathBuf,
 
     /// The listen address for the server
-    #[clap(long, default_value = "0.0.0.0:3000")]
+    #[clap(long, default_value = "0.0.0.0:3000", env = "STATIC_SERVER_ADDRESS")]
     address: SocketAddr,
 
     /// Enable directory browsing
-    #[clap(long)]
+    #[clap(long, env = "STATIC_SERVER_BROWSE")]
     browse: bool,
 }
 
